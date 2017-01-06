@@ -1,0 +1,41 @@
+
+
+
+Download the file
+
+```{r}
+setwd("~/ReprodResearchHW2/")
+download.file("https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2",
+              "stormdata.bz2")
+
+```
+First we load the data and check for NA in the relevant variables
+
+```{r}
+library(dplyr)
+StormData<-read.csv("stormdata.bz2",na.strings = "?")
+StormData %>% filter(is.na(FATALITIES)) %>% dim
+StormData %>% filter(is.na(INJURIES)) %>% dim
+StormData %>% filter(is.na(EVTYPE)) %>% dim
+StormData %>% filter(is.na(PROPDMG)) %>% dim
+StormData %>% filter(is.na(CROPDMG)) %>% dim
+```
+
+There is only one missing value in EVTYPE, we continue grouping the data for health and economic repercutions
+
+```{r}
+DamagesbyEvent<-StormData %>% group_by(EVTYPE) %>% summarise(
+  INJURIES=sum(INJURIES),FATALITIES=sum(FATALITIES),PROPDMG=sum(PROPDMG),CROPDMG=sum(CROPDMG))
+```
+
+This is a plot showing the biggest hazzards to health 
+
+```{r}
+library(ggplot2)
+library(tidyr)
+PlotDB<-DamagesbyEvent %>% gather(VARIABLE,VALUE,-EVTYPE)
+PlotDB<-PlotDB %>% group_by(VARIABLE) %>% top_n(10,VALUE) %>% arrange(VALUE)
+#PlotDB<-filter(PlotDB,VARIABLE=="INJURIES")
+ggplot(PlotDB,aes(x=EVTYPE,y=VALUE))+geom_col()+facet_wrap(~VARIABLE)+coord_flip()
+```
+
